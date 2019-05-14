@@ -205,7 +205,7 @@ instance.prototype.feedback = function(feedback, bank) {
 	if (feedback.type == 'user_loggedin') {
 		if (self.users !== undefined) {
 			var userObj = self.users.find(u => u.username === feedback.options.user);
-			if (userObj !== 'undefined') {
+			if (userObj) {
 				if (userObj.online === "1") {
 					return { color: feedback.options.fg, bgcolor: feedback.options.bg };
 				}
@@ -216,7 +216,7 @@ instance.prototype.feedback = function(feedback, bank) {
 	if (feedback.type == 'user_loggedout') {
 		if (self.users !== undefined) {
 			var userObj = self.users.find(u => u.username === feedback.options.user);
-			if (userObj !== 'undefined') {
+			if (userObj) {
 				if (userObj.online === "0") {
 					return { color: feedback.options.fg, bgcolor: feedback.options.bg };
 				}
