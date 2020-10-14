@@ -28,6 +28,8 @@ instance.prototype.init = function() {
 	var self = this;
 
 	self.status(self.STATUS_OK);
+
+	self.interval = null;
 	
 	self.channels = [];
 	self.groups = [];
@@ -35,53 +37,68 @@ instance.prototype.init = function() {
 	self.feeds = [];
 	
 	self.userList = [];
-	
-	self.interval = setInterval(function() {
-		self.system.emit('rest_get', 'http://' + self.config.host + ':' + self.config.port + '/userconfig',function (err, data, response) {
-			if (err !== null) {
-				self.status(self.status_ERROR, err);
-				return;
-			}
-			else {		
-				self.status(self.STATUS_OK);
-				
-				let unitydata = data.data;
 
-				self.channels = unitydata.channels;
-				self.groups = unitydata.groups;
-				self.users = unitydata.users;
-				self.feeds = unitydata.feeds;
-				
-				self.userList = [];
-
-				var users_total_loggedin = 0;
-
-				for (var u in self.users) {
-					let user = self.users[u];
-					self.userList.push({ id: user.username, label: user.title + ' (' + user.username + ')' });
-					if (user.online === "1") {
-						users_total_loggedin++;
+	if (self.config.host) {
+		try {
+			self.interval = setInterval(function() {
+				self.system.emit('rest_get', 'http://' + self.config.host + ':' + self.config.port + '/userconfig',function (err, data, response) {
+					if (err !== null) {
+						self.status(self.STATUS_ERROR, err);
+						return;
 					}
-				}
-
-				self.actions();
-				self.init_presets();
-				self.init_feedbacks();
-				self.init_variables();
-
-				self.setVariable('users_total_loggedin', users_total_loggedin);
-
-				self.checkFeedbacks('user_loggedin');
-				self.checkFeedbacks('user_loggedout');
-			}
-		});
-	}, self.config.refresh);
+					else {		
+						self.status(self.STATUS_OK);
+						
+						let unitydata = data.data;
+		
+						self.channels = unitydata.channels;
+						self.groups = unitydata.groups;
+						self.users = unitydata.users;
+						self.feeds = unitydata.feeds;
+						
+						self.userList = [];
+		
+						var users_total_loggedin = 0;
+		
+						for (var u in self.users) {
+							let user = self.users[u];
+							self.userList.push({ id: user.username, label: user.title + ' (' + user.username + ')' });
+							if (user.online === "1") {
+								users_total_loggedin++;
+							}
+						}
+		
+						self.actions();
+						self.init_presets();
+						self.init_feedbacks();
+						self.init_variables();
+		
+						self.setVariable('users_total_loggedin', users_total_loggedin);
+		
+						self.checkFeedbacks('user_loggedin');
+						self.checkFeedbacks('user_loggedout');
+					}
+				});
+			}, self.config.refresh);
+		}
+		catch(error) {
+			self.log('error', error);
+			self.status(self.STATUS_ERROR, error);
+		}
+	}
 }
 
 // Return config fields for web config
 instance.prototype.config_fields = function () {
 	var self = this;
 	return [
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Information',
+			value: 'This is a feedback-only module to show logged in users of Unity Intercom. It does not provide any control options.'
+		},
 		{
 			type: 'textinput',
 			id: 'host',
@@ -112,7 +129,10 @@ instance.prototype.config_fields = function () {
 instance.prototype.destroy = function() {
 	var self = this;
 	
-	clearInterval(self.interval);
+	if (self.interval) {
+		clearInterval(self.interval);
+		self.interval = null;
+	}
 	
 	self.channels = [];
 	self.groups = [];
