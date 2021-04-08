@@ -28,7 +28,7 @@ instance.prototype.init = function() {
 	var self = this;
 
 	self.status(self.STATUS_OK);
-
+	self.log('warn', 'This module is deprecated and will be removed from a future version of Companion');
 	self.interval = null;
 	
 	self.channels = [];
